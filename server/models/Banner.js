@@ -10,10 +10,16 @@ const bannerSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  imageUrl: {
-    type: String,
-    required: [true, 'Banner image URL is required']
-  },
+  images: [{
+    url: {
+      type: String,
+      required: true
+    },
+    publicId: {
+      type: String,
+      required: true
+    }
+  }],
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product'

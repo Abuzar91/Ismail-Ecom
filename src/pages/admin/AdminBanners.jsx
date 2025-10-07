@@ -10,10 +10,13 @@ const AdminBanners = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
-    imageUrl: '',
     productId: '',
     ctaText: 'Shop Now',
     isActive: true,
@@ -47,15 +50,66 @@ const AdminBanners = () => {
     }
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setImageFiles(prevFiles => [...prevFiles, ...files]);
+
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setImagePreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
+  };
+
+  const removeNewImage = (index) => {
+    setImageFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+    URL.revokeObjectURL(imagePreviews[index]);
+    setImagePreviews(prevPreviews => prevPreviews.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (publicId) => {
+    setExistingImages(prevImages => prevImages.filter(img => img.publicId !== publicId));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (imageFiles.length === 0 && (!editingBanner || existingImages.length === 0)) {
+      toast.error('Please upload at least one image');
+      return;
+    }
+
     try {
+      setUploading(true);
+      const submitFormData = new FormData();
+
+      submitFormData.append('title', formData.title);
+      submitFormData.append('subtitle', formData.subtitle);
+      submitFormData.append('productId', formData.productId);
+      submitFormData.append('ctaText', formData.ctaText);
+      submitFormData.append('isActive', formData.isActive);
+      submitFormData.append('orderPosition', formData.orderPosition);
+
+      imageFiles.forEach(file => {
+        submitFormData.append('images', file);
+      });
+
       if (editingBanner) {
-        await axios.put(`/api/banners/${editingBanner._id}`, formData);
+        const removedImages = editingBanner.images
+          .filter(img => !existingImages.find(ei => ei.publicId === img.publicId))
+          .map(img => img.publicId);
+
+        if (removedImages.length > 0) {
+          submitFormData.append('removeImages', JSON.stringify(removedImages));
+        }
+
+        await axios.put(`/api/banners/${editingBanner._id}`, submitFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success('Banner updated successfully');
       } else {
-        await axios.post('/api/banners', formData);
+        await axios.post('/api/banners', submitFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success('Banner created successfully');
       }
 
@@ -63,7 +117,9 @@ const AdminBanners = () => {
       handleCloseModal();
     } catch (error) {
       console.error('Error saving banner:', error);
-      toast.error('Failed to save banner');
+      toast.error(error.response?.data?.message || 'Failed to save banner');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -82,10 +138,10 @@ const AdminBanners = () => {
 
   const handleEdit = (banner) => {
     setEditingBanner(banner);
+    setExistingImages(banner.images || []);
     setFormData({
       title: banner.title,
       subtitle: banner.subtitle || '',
-      imageUrl: banner.imageUrl,
       productId: banner.productId?._id || '',
       ctaText: banner.ctaText,
       isActive: banner.isActive,
@@ -97,10 +153,12 @@ const AdminBanners = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingBanner(null);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setExistingImages([]);
     setFormData({
       title: '',
       subtitle: '',
-      imageUrl: '',
       productId: '',
       ctaText: 'Shop Now',
       isActive: true,
@@ -144,10 +202,15 @@ const AdminBanners = () => {
               <div className="flex flex-col md:flex-row">
                 <div className="md:w-1/3">
                   <img
-                    src={banner.imageUrl}
+                    src={banner.images?.[0]?.url || 'https://images.pexels.com/photos/3373736/pexels-photo-3373736.jpeg?auto=compress&cs=tinysrgb&w=400'}
                     alt={banner.title}
                     className="w-full h-48 md:h-full object-cover"
                   />
+                  {banner.images && banner.images.length > 1 && (
+                    <div className="absolute top-2 right-2 bg-luxury-black/80 text-luxury-gold px-3 py-1 rounded-full text-sm">
+                      +{banner.images.length - 1} more
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -210,7 +273,6 @@ const AdminBanners = () => {
         </div>
       </div>
 
-      {/* Banner Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
@@ -258,21 +320,70 @@ const AdminBanners = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Image URL *
+                  Banner Images * (You can upload multiple images)
                 </label>
-                <input
-                  type="url"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  className="w-full px-4 py-3 bg-luxury-black border border-luxury-gold/20 rounded-sm text-luxury-pearl focus:border-luxury-gold focus:outline-none"
-                  required
-                />
-                {formData.imageUrl && (
-                  <img
-                    src={formData.imageUrl}
-                    alt="Preview"
-                    className="mt-3 w-full h-48 object-cover rounded-sm"
+                <div className="border-2 border-dashed border-luxury-gold/30 rounded-sm p-6 text-center hover:border-luxury-gold/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="banner-images"
                   />
+                  <label htmlFor="banner-images" className="cursor-pointer">
+                    <Upload className="mx-auto text-luxury-gold mb-2" size={32} />
+                    <p className="text-gray-300 mb-1">Click to upload banner images</p>
+                    <p className="text-sm text-gray-500">Support multiple images (JPG, PNG, WEBP)</p>
+                  </label>
+                </div>
+
+                {existingImages.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400 mb-2">Existing Images:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {existingImages.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image.url}
+                            alt={`Existing ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(image.publicId)}
+                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {imagePreviews.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400 mb-2">New Images to Upload:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeNewImage(index)}
+                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -336,15 +447,26 @@ const AdminBanners = () => {
                   type="button"
                   onClick={handleCloseModal}
                   className="px-6 py-3 border border-luxury-gold/30 text-gray-300 rounded-sm hover:bg-luxury-gold/5 transition-colors"
+                  disabled={uploading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center px-6 py-3 bg-luxury-gold text-black font-semibold rounded-sm hover:bg-yellow-400 transition-all"
+                  disabled={uploading}
+                  className="flex items-center px-6 py-3 bg-luxury-gold text-black font-semibold rounded-sm hover:bg-yellow-400 transition-all disabled:opacity-50"
                 >
-                  <Save className="mr-2" size={20} />
-                  {editingBanner ? 'Update' : 'Create'} Banner
+                  {uploading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2" size={20} />
+                      {editingBanner ? 'Update' : 'Create'} Banner
+                    </>
+                  )}
                 </button>
               </div>
             </form>

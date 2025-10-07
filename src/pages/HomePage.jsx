@@ -11,6 +11,7 @@ const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [banners, setBanners] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,15 +21,17 @@ const HomePage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [productsRes, bannersRes, announcementsRes] = await Promise.all([
+      const [productsRes, bannersRes, announcementsRes, collectionsRes] = await Promise.all([
         axios.get('/api/products?featured=true&limit=4'),
         axios.get('/api/banners'),
-        axios.get('/api/announcements')
+        axios.get('/api/announcements'),
+        axios.get('/api/collections')
       ]);
 
       setFeaturedProducts(productsRes.data.products || []);
       setBanners(bannersRes.data.banners || []);
       setAnnouncements(announcementsRes.data.announcements || []);
+      setCollections(collectionsRes.data.collections || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -59,23 +62,25 @@ const HomePage = () => {
     }
   ];
 
-  const collections = [
+  const defaultCollections = [
     {
       name: "Midnight Collection",
       description: "Dark, mysterious fragrances for the evening",
-      image: "https://images.pexels.com/photos/3373736/pexels-photo-3373736.jpeg?auto=compress&cs=tinysrgb&w=800"
+      image: { url: "https://images.pexels.com/photos/3373736/pexels-photo-3373736.jpeg?auto=compress&cs=tinysrgb&w=800" }
     },
     {
       name: "Golden Hour",
       description: "Warm, sophisticated scents for any occasion",
-      image: "https://images.pexels.com/photos/7533347/pexels-photo-7533347.jpeg?auto=compress&cs=tinysrgb&w=800"
+      image: { url: "https://images.pexels.com/photos/7533347/pexels-photo-7533347.jpeg?auto=compress&cs=tinysrgb&w=800" }
     },
     {
       name: "Essence Pure",
       description: "Light, elegant fragrances for everyday luxury",
-      image: "https://images.pexels.com/photos/8129903/pexels-photo-8129903.jpeg?auto=compress&cs=tinysrgb&w=800"
+      image: { url: "https://images.pexels.com/photos/8129903/pexels-photo-8129903.jpeg?auto=compress&cs=tinysrgb&w=800" }
     }
   ];
+
+  const displayCollections = collections.length > 0 ? collections : defaultCollections;
 
   const testimonials = [
     {
@@ -290,9 +295,9 @@ const HomePage = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {collections.map((collection, index) => (
+            {displayCollections.map((collection, index) => (
               <motion.div
-                key={index}
+                key={collection._id || index}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.15 }}
@@ -301,7 +306,7 @@ const HomePage = () => {
               >
                 <div className="aspect-[3/4] overflow-hidden">
                   <img
-                    src={collection.image}
+                    src={collection.image?.url || collection.image}
                     alt={collection.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />

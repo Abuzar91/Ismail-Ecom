@@ -5,7 +5,6 @@ import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 
-// Pages
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
@@ -16,7 +15,6 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import AuthPage from './pages/AuthPage';
 
-// Admin Pages
 import AdminLayout from './components/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -24,15 +22,14 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminBanners from './pages/admin/AdminBanners';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminCollections from './pages/admin/AdminCollections';
 
-// Components
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import AdminRoute from './components/AdminRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 
-// Loading Context
 const LoadingContext = React.createContext();
 
 const LoadingProvider = ({ children }) => {
@@ -59,7 +56,6 @@ function App() {
             <CartProvider>
               <div className="min-h-screen bg-luxury-black">
                 <Routes>
-                  {/* Public Routes */}
                   <Route path="/" element={<><Navbar /><HomePage /><Footer /><WhatsAppButton /></>} />
                   <Route path="/products" element={<><Navbar /><ProductsPage /><Footer /><WhatsAppButton /></>} />
                   <Route path="/product/:id" element={<><Navbar /><ProductDetailPage /><Footer /><WhatsAppButton /></>} />
@@ -70,13 +66,13 @@ function App() {
                   <Route path="/contact" element={<><Navbar /><ContactPage /><Footer /><WhatsAppButton /></>} />
                   <Route path="/auth" element={<><Navbar /><AuthPage /><Footer /></>} />
                   
-                  {/* Admin Routes with Layout */}
                   <Route path="/admin/dashboard" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
                   <Route path="/admin/products" element={<AdminRoute><AdminLayout><AdminProducts /></AdminLayout></AdminRoute>} />
                   <Route path="/admin/orders" element={<AdminRoute><AdminLayout><AdminOrders /></AdminLayout></AdminRoute>} />
                   <Route path="/admin/banners" element={<AdminRoute><AdminLayout><AdminBanners /></AdminLayout></AdminRoute>} />
                   <Route path="/admin/announcements" element={<AdminRoute><AdminLayout><AdminAnnouncements /></AdminLayout></AdminRoute>} />
                   <Route path="/admin/users" element={<AdminRoute><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
+                  <Route path="/admin/collections" element={<AdminRoute><AdminLayout><AdminCollections /></AdminLayout></AdminRoute>} />
                 </Routes>
                 <Toaster position="top-right" />
               </div>

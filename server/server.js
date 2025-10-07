@@ -15,6 +15,7 @@ import userRoutes from './routes/users.js';
 import dashboardRoutes from './routes/dashboard.js';
 import bannerRoutes from './routes/banners.js';
 import announcementRoutes from './routes/announcements.js';
+import collectionRoutes from './routes/collections.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +51,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/collections', collectionRoutes);
 
 app.get('/api/health', (req, res) => {
   logger.info('Health check requested');

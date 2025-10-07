@@ -91,7 +91,7 @@ const BannerCarousel = ({ banners }) => {
         >
           <div className="relative w-full h-full">
             <img
-              src={banners[currentIndex].imageUrl}
+              src={banners[currentIndex].images?.[0]?.url || banners[currentIndex].imageUrl}
               alt={banners[currentIndex].title}
               className="absolute inset-0 w-full h-full object-cover"
             />

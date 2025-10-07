@@ -30,6 +30,7 @@ const AdminLayout = ({ children }) => {
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Announcements', href: '/admin/announcements', icon: Bell },
     { name: 'Banners', href: '/admin/banners', icon: Settings },
+    { name: 'Collections', href: '/admin/collections', icon: BarChart3 },
   ];
 
   const handleLogout = () => {

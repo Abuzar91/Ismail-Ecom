@@ -2,6 +2,8 @@ import express from 'express';
 import Banner from '../models/Banner.js';
 import { authenticate, adminOnly } from '../middleware/auth.js';
 import logger from '../middleware/logger.js';
+import upload from '../middleware/upload.js';
+import cloudinary from '../config/cloudinary.js';
 
 const router = express.Router();
 
@@ -35,22 +37,31 @@ router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/', authenticate, adminOnly, async (req, res) => {
+router.post('/', authenticate, adminOnly, upload.array('images', 5), async (req, res) => {
   try {
-    const { title, subtitle, imageUrl, productId, ctaText, isActive, orderPosition } = req.body;
+    const { title, subtitle, productId, ctaText, isActive, orderPosition } = req.body;
 
-    if (!title || !imageUrl) {
-      return res.status(400).json({ message: 'Title and image URL are required' });
+    if (!title) {
+      return res.status(400).json({ message: 'Title is required' });
     }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'At least one image is required' });
+    }
+
+    const images = req.files.map(file => ({
+      url: file.path,
+      publicId: file.filename
+    }));
 
     const banner = new Banner({
       title,
       subtitle,
-      imageUrl,
+      images,
       productId: productId || null,
       ctaText,
-      isActive,
-      orderPosition
+      isActive: isActive === 'true' || isActive === true,
+      orderPosition: parseInt(orderPosition) || 0
     });
 
     await banner.save();
@@ -64,10 +75,10 @@ router.post('/', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticate, adminOnly, async (req, res) => {
+router.put('/:id', authenticate, adminOnly, upload.array('images', 5), async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, subtitle, imageUrl, productId, ctaText, isActive, orderPosition } = req.body;
+    const { title, subtitle, productId, ctaText, isActive, orderPosition, removeImages } = req.body;
 
     const banner = await Banner.findById(id);
 
@@ -75,13 +86,32 @@ router.put('/:id', authenticate, adminOnly, async (req, res) => {
       return res.status(404).json({ message: 'Banner not found' });
     }
 
+    if (removeImages) {
+      const imagesToRemove = JSON.parse(removeImages);
+      for (const publicId of imagesToRemove) {
+        try {
+          await cloudinary.uploader.destroy(publicId);
+          banner.images = banner.images.filter(img => img.publicId !== publicId);
+        } catch (err) {
+          logger.error('Error deleting image from Cloudinary:', err);
+        }
+      }
+    }
+
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => ({
+        url: file.path,
+        publicId: file.filename
+      }));
+      banner.images = [...banner.images, ...newImages];
+    }
+
     banner.title = title || banner.title;
     banner.subtitle = subtitle !== undefined ? subtitle : banner.subtitle;
-    banner.imageUrl = imageUrl || banner.imageUrl;
     banner.productId = productId || null;
     banner.ctaText = ctaText || banner.ctaText;
-    banner.isActive = isActive !== undefined ? isActive : banner.isActive;
-    banner.orderPosition = orderPosition !== undefined ? orderPosition : banner.orderPosition;
+    banner.isActive = isActive !== undefined ? (isActive === 'true' || isActive === true) : banner.isActive;
+    banner.orderPosition = orderPosition !== undefined ? parseInt(orderPosition) : banner.orderPosition;
 
     await banner.save();
     await banner.populate('productId', 'name price images');
@@ -102,6 +132,14 @@ router.delete('/:id', authenticate, adminOnly, async (req, res) => {
 
     if (!banner) {
       return res.status(404).json({ message: 'Banner not found' });
+    }
+
+    for (const image of banner.images) {
+      try {
+        await cloudinary.uploader.destroy(image.publicId);
+      } catch (err) {
+        logger.error('Error deleting image from Cloudinary:', err);
+      }
     }
 
     await Banner.deleteOne({ _id: id });
