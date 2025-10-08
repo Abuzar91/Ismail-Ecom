@@ -1,12 +1,13 @@
 import express from 'express';
 import { authenticate, adminOnly } from '../middleware/auth.js';
+import { checkPermission } from '../middleware/permissions.js';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 
 const router = express.Router();
 
-router.get('/stats', authenticate, adminOnly, async (req, res) => {
+router.get('/stats', authenticate, checkPermission('dashboard', 'view'), async (req, res) => {
   try {
     const { period = '30' } = req.query;
     const days = parseInt(period);
@@ -139,7 +140,7 @@ router.get('/stats', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.get('/analytics', authenticate, adminOnly, async (req, res) => {
+router.get('/analytics', authenticate, checkPermission('dashboard', 'analytics'), async (req, res) => {
   try {
     const { type = 'monthly', year = new Date().getFullYear() } = req.query;
     

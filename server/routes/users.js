@@ -1,11 +1,12 @@
 import express from 'express';
 import { authenticate, adminOnly } from '../middleware/auth.js';
+import { checkPermission } from '../middleware/permissions.js';
 import User from '../models/User.js';
 import Order from '../models/Order.js';
 
 const router = express.Router();
 
-router.get('/', authenticate, adminOnly, async (req, res) => {
+router.get('/', authenticate, checkPermission('users', 'read'), async (req, res) => {
   try {
     const {
       page = 1,
@@ -77,7 +78,7 @@ router.get('/', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.get('/:id', authenticate, adminOnly, async (req, res) => {
+router.get('/:id', authenticate, checkPermission('users', 'read'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
@@ -116,7 +117,7 @@ router.get('/:id', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticate, adminOnly, async (req, res) => {
+router.put('/:id', authenticate, checkPermission('users', 'update'), async (req, res) => {
   try {
     const { name, email, role, isActive } = req.body;
     
@@ -158,7 +159,7 @@ router.put('/:id', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticate, adminOnly, async (req, res) => {
+router.delete('/:id', authenticate, checkPermission('users', 'delete'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     
@@ -183,7 +184,7 @@ router.delete('/:id', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/', authenticate, adminOnly, async (req, res) => {
+router.post('/', authenticate, checkPermission('users', 'create'), async (req, res) => {
   try {
     const { name, email, password, role = 'customer' } = req.body;
 

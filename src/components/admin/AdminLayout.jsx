@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  LogOut, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  LogOut,
+  Menu,
   X,
   Settings,
   BarChart3,
   Bell,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Logo from "../Logo"
@@ -21,17 +22,26 @@ const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isSuperAdmin, hasPermission } = useAuth();
 
-  const navigation = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Products', href: '/admin/products', icon: Package },
-    { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Announcements', href: '/admin/announcements', icon: Bell },
-    { name: 'Banners', href: '/admin/banners', icon: Settings },
-    { name: 'Collections', href: '/admin/collections', icon: BarChart3 },
+  const allNavigation = [
+    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, resource: 'dashboard', action: 'view' },
+    { name: 'Products', href: '/admin/products', icon: Package, resource: 'products', action: 'read' },
+    { name: 'Orders', href: '/admin/orders', icon: ShoppingCart, resource: 'orders', action: 'read' },
+    { name: 'Users', href: '/admin/users', icon: Users, resource: 'users', action: 'read' },
+    { name: 'Announcements', href: '/admin/announcements', icon: Bell, resource: 'announcements', action: 'read' },
+    { name: 'Banners', href: '/admin/banners', icon: Settings, resource: 'banners', action: 'read' },
+    { name: 'Collections', href: '/admin/collections', icon: BarChart3, resource: 'collections', action: 'read' },
+    { name: 'Admin Management', href: '/admin/admin-management', icon: Shield, superAdminOnly: true }
   ];
+
+  const navigation = allNavigation.filter(item => {
+    if (item.superAdminOnly) {
+      return isSuperAdmin;
+    }
+    if (isSuperAdmin) return true;
+    return hasPermission(item.resource, item.action);
+  });
 
   const handleLogout = () => {
     logout();

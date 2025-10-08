@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate, adminOnly } from '../middleware/auth.js';
+import { checkPermission } from '../middleware/permissions.js';
 import upload from '../middleware/upload.js';
 import Product from '../models/Product.js';
 import cloudinary from '../config/cloudinary.js';
@@ -92,7 +93,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', authenticate, adminOnly, upload.array('images', 5), async (req, res) => {
+router.post('/', authenticate, checkPermission('products', 'create'), upload.array('images', 5), async (req, res) => {
   try {
     const productData = { ...req.body };
 
@@ -130,7 +131,7 @@ router.post('/', authenticate, adminOnly, upload.array('images', 5), async (req,
   }
 });
 
-router.put('/:id', authenticate, adminOnly, upload.array('images', 5), async (req, res) => {
+router.put('/:id', authenticate, checkPermission('products', 'update'), upload.array('images', 5), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     
@@ -185,7 +186,7 @@ router.put('/:id', authenticate, adminOnly, upload.array('images', 5), async (re
   }
 });
 
-router.delete('/:id', authenticate, adminOnly, async (req, res) => {
+router.delete('/:id', authenticate, checkPermission('products', 'delete'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     
@@ -214,7 +215,7 @@ router.delete('/:id', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
+router.get('/admin/all', authenticate, checkPermission('products', 'read'), async (req, res) => {
   try {
     const {
       page = 1,

@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { authenticate } from '../middleware/auth.js';
 import User from '../models/User.js';
+import Permission from '../models/Permission.js';
 
 const router = express.Router();
 
@@ -148,9 +149,19 @@ router.post('/customer-signup', async (req, res) => {
 
 router.get('/me', authenticate, async (req, res) => {
   try {
+    let userPermissions = null;
+
+    if (req.user.role === 'admin') {
+      const permissions = await Permission.findOne({ userId: req.user._id });
+      userPermissions = permissions ? permissions.permissions : null;
+    }
+
     res.json({
       success: true,
-      user: req.user
+      user: {
+        ...req.user.toJSON(),
+        permissions: userPermissions
+      }
     });
   } catch (error) {
     console.error('Get user error:', error);

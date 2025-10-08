@@ -23,6 +23,7 @@ import AdminBanners from './pages/admin/AdminBanners';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminCollections from './pages/admin/AdminCollections';
+import AdminManagement from './pages/admin/AdminManagement';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -73,6 +74,7 @@ function App() {
                   <Route path="/admin/announcements" element={<AdminRoute><AdminLayout><AdminAnnouncements /></AdminLayout></AdminRoute>} />
                   <Route path="/admin/users" element={<AdminRoute><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
                   <Route path="/admin/collections" element={<AdminRoute><AdminLayout><AdminCollections /></AdminLayout></AdminRoute>} />
+                  <Route path="/admin/admin-management" element={<AdminRoute><AdminLayout><AdminManagement /></AdminLayout></AdminRoute>} />
                 </Routes>
                 <Toaster position="top-right" />
               </div>

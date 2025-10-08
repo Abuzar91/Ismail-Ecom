@@ -1,6 +1,7 @@
 import express from 'express';
 import Banner from '../models/Banner.js';
 import { authenticate, adminOnly } from '../middleware/auth.js';
+import { checkPermission } from '../middleware/permissions.js';
 import logger from '../middleware/logger.js';
 import upload from '../middleware/upload.js';
 import cloudinary from '../config/cloudinary.js';
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
+router.get('/admin/all', authenticate, checkPermission('banners', 'read'), async (req, res) => {
   try {
     const banners = await Banner.find()
       .sort({ orderPosition: 1, createdAt: -1 })
@@ -37,7 +38,7 @@ router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/', authenticate, adminOnly, upload.array('images', 5), async (req, res) => {
+router.post('/', authenticate, checkPermission('banners', 'create'), upload.array('images', 5), async (req, res) => {
   try {
     const { title, subtitle, productId, ctaText, isActive, orderPosition } = req.body;
 
@@ -75,7 +76,7 @@ router.post('/', authenticate, adminOnly, upload.array('images', 5), async (req,
   }
 });
 
-router.put('/:id', authenticate, adminOnly, upload.array('images', 5), async (req, res) => {
+router.put('/:id', authenticate, checkPermission('banners', 'update'), upload.array('images', 5), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, subtitle, productId, ctaText, isActive, orderPosition, removeImages } = req.body;
@@ -124,7 +125,7 @@ router.put('/:id', authenticate, adminOnly, upload.array('images', 5), async (re
   }
 });
 
-router.delete('/:id', authenticate, adminOnly, async (req, res) => {
+router.delete('/:id', authenticate, checkPermission('banners', 'delete'), async (req, res) => {
   try {
     const { id } = req.params;
 

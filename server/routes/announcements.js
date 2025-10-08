@@ -1,6 +1,7 @@
 import express from 'express';
 import Announcement from '../models/Announcement.js';
 import { authenticate, adminOnly } from '../middleware/auth.js';
+import { checkPermission } from '../middleware/permissions.js';
 import logger from '../middleware/logger.js';
 
 const router = express.Router();
@@ -19,7 +20,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
+router.get('/admin/all', authenticate, checkPermission('announcements', 'read'), async (req, res) => {
   try {
     const announcements = await Announcement.find()
       .sort({ priority: -1, createdAt: -1 })
@@ -33,7 +34,7 @@ router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/', authenticate, adminOnly, async (req, res) => {
+router.post('/', authenticate, checkPermission('announcements', 'create'), async (req, res) => {
   try {
     const { title, message, isActive, priority } = req.body;
 
@@ -58,7 +59,7 @@ router.post('/', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticate, adminOnly, async (req, res) => {
+router.put('/:id', authenticate, checkPermission('announcements', 'update'), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, message, isActive, priority } = req.body;
@@ -84,7 +85,7 @@ router.put('/:id', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticate, adminOnly, async (req, res) => {
+router.delete('/:id', authenticate, checkPermission('announcements', 'delete'), async (req, res) => {
   try {
     const { id } = req.params;
 

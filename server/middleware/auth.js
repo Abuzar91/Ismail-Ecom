@@ -25,8 +25,15 @@ export const authenticate = async (req, res, next) => {
 };
 
 export const adminOnly = (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || !['admin', 'superadmin'].includes(req.user.role)) {
     return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+  }
+  next();
+};
+
+export const superAdminOnly = (req, res, next) => {
+  if (!req.user || req.user.role !== 'superadmin') {
+    return res.status(403).json({ message: 'Access denied. SuperAdmin privileges required.' });
   }
   next();
 };

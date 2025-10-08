@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate, adminOnly, optionalAuth } from '../middleware/auth.js';
+import { checkPermission } from '../middleware/permissions.js';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { sendOrderConfirmationEmail } from '../config/email.js';
@@ -167,7 +168,7 @@ router.get('/track/:orderNumber', async (req, res) => {
   }
 });
 
-router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
+router.get('/admin/all', authenticate, checkPermission('orders', 'read'), async (req, res) => {
   try {
     const {
       page = 1,
@@ -229,7 +230,7 @@ router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.get('/admin/stats', authenticate, adminOnly, async (req, res) => {
+router.get('/admin/stats', authenticate, checkPermission('orders', 'read'), async (req, res) => {
   try {
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
@@ -271,7 +272,7 @@ router.get('/admin/stats', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.put('/:id/status', authenticate, adminOnly, async (req, res) => {
+router.put('/:id/status', authenticate, checkPermission('orders', 'update'), async (req, res) => {
   try {
     const { orderStatus, paymentStatus, adminNotes } = req.body;
     
@@ -386,7 +387,7 @@ router.put('/:id/cancel', optionalAuth, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticate, adminOnly, async (req, res) => {
+router.delete('/:id', authenticate, checkPermission('orders', 'delete'), async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     

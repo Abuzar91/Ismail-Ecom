@@ -1,6 +1,7 @@
 import express from 'express';
 import Collection from '../models/Collection.js';
 import { authenticate, adminOnly } from '../middleware/auth.js';
+import { checkPermission } from '../middleware/permissions.js';
 import logger from '../middleware/logger.js';
 import upload from '../middleware/upload.js';
 import cloudinary from '../config/cloudinary.js';
@@ -21,7 +22,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
+router.get('/admin/all', authenticate, checkPermission('collections', 'read'), async (req, res) => {
   try {
     const collections = await Collection.find()
       .sort({ orderPosition: 1, createdAt: -1 })
@@ -35,7 +36,7 @@ router.get('/admin/all', authenticate, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/', authenticate, adminOnly, upload.single('image'), async (req, res) => {
+router.post('/', authenticate, checkPermission('collections', 'create'), upload.single('image'), async (req, res) => {
   try {
     const { name, description, isActive, orderPosition } = req.body;
 
@@ -68,7 +69,7 @@ router.post('/', authenticate, adminOnly, upload.single('image'), async (req, re
   }
 });
 
-router.put('/:id', authenticate, adminOnly, upload.single('image'), async (req, res) => {
+router.put('/:id', authenticate, checkPermission('collections', 'update'), upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, isActive, orderPosition } = req.body;
@@ -107,7 +108,7 @@ router.put('/:id', authenticate, adminOnly, upload.single('image'), async (req, 
   }
 });
 
-router.delete('/:id', authenticate, adminOnly, async (req, res) => {
+router.delete('/:id', authenticate, checkPermission('collections', 'delete'), async (req, res) => {
   try {
     const { id } = req.params;
 
